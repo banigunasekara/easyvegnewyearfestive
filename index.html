@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyVeg - Awurudu Rasakewili</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #fffcf2; }
+        .festive-gradient { background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); }
+        .cart-badge { position: absolute; top: -5px; right: -5px; background: #fbbf24; color: #b91c1c; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <header class="bg-white shadow-sm p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="https://i.ibb.co/Lhyg68F/logo.jpg" alt="Logo" class="h-12 w-12 rounded-full border-2 border-green-600">
+                <h1 class="text-2xl font-black text-green-700 tracking-tight">EasyVeg</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="showAdminLogin()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-user-shield"></i></button>
+                <button onclick="toggleCart()" class="relative p-2 text-red-700 bg-red-50 rounded-full">
+                    <i class="fas fa-shopping-basket text-xl"></i>
+                    <span id="cart-count" class="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div id="login-form">
+                <h2 class="text-xl font-bold mb-4">Admin Login</h2>
+                <input type="email" id="admin-email" placeholder="Email" class="w-full p-3 border rounded mb-3">
+                <input type="password" id="admin-pass" placeholder="Password" class="w-full p-3 border rounded mb-4">
+                <button onclick="loginAdmin()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">Login</button>
+                <button onclick="closeAdmin()" class="w-full mt-2 text-gray-500">Cancel</button>
+            </div>
+            <div id="upload-panel" class="hidden">
+                <h2 class="text-xl font-bold mb-4 text-green-700">Update Products</h2>
+                <select id="prod-id" class="w-full p-3 border rounded mb-3 font-semibold">
+                    <option value="1">Konda Keum</option><option value="2">Mung Keum</option>
+                    <option value="3">Kokis</option><option value="4">Aluwa</option>
+                    <option value="5">Rulang</option><option value="6">Naran Keum</option>
+                    <option value="7">Pani Walalu</option><option value="8">Aasmi</option>
+                    <option value="9">Dodol - 250g</option>
+                </select>
+                <input type="number" id="prod-price" placeholder="Update Price" class="w-full p-3 border rounded mb-3">
+                <input type="file" id="file-input" class="w-full mb-4 text-sm text-gray-500">
+                <button id="up-btn" onclick="uploadToImgBB()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Upload & Sync</button>
+                <p id="up-status" class="mt-2 text-xs text-center"></p>
+                <button onclick="closeAdmin()" class="w-full mt-4 text-red-500 font-bold">Logout / Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="festive-gradient text-white p-8 text-center">
+        <h2 class="text-3xl font-bold mb-1">අවුරුදු රසකැවිලි</h2>
+        <p class="text-yellow-200">EasyVeg - Freshly made for you</p>
+    </div>
+
+    <main class="container mx-auto px-4 mt-6">
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="col-span-full text-center py-10 text-gray-400">Loading festive treats...</div>
+        </div>
+    </main>
+
+    <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300">
+        <div class="flex flex-col h-full">
+            <div class="p-6 border-b flex justify-between items-center bg-red-700 text-white">
+                <h3 class="text-xl font-bold">ඔබේ ඇණවුම (Cart)</h3>
+                <button onclick="toggleCart()" class="text-2xl">&times;</button>
+            </div>
+            <div id="cart-items" class="flex-grow overflow-y-auto p-4 space-y-3"></div>
+            <div class="p-6 border-t bg-gray-50">
+                <div class="flex justify-between text-2xl font-bold mb-6">
+                    <span>එකතුව:</span>
+                    <span class="text-red-700">Rs. <span id="cart-total">0</span></span>
+                </div>
+                <button onclick="sendToWhatsApp()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-3 shadow-lg active:scale-95 transition">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    <span>Order via WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeo_DytuLnAin7WnzcKcOQQO9DgGcR7pA",
+            authDomain: "my-web-site-5cbf9.firebaseapp.com",
+            projectId: "my-web-site-5cbf9",
+            databaseURL: "https://my-web-site-5cbf9-default-rtdb.firebaseio.com/",
+            storageBucket: "my-web-site-5cbf9.firebasestorage.app",
+            messagingSenderId: "713144193429",
+            appId: "1:713144193429:web:33cbdc57268184af79a69c"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const IMGBB_API = "0d3d35934a71f8813b2b79e4b464eea5";
+        const WHATSAPP = "94716086853";
+
+        let products = [];
+        let cart = [];
+
+        // Load Data from Firebase
+        function loadData() {
+            db.ref('products').on('value', (snap) => {
+                const data = snap.val();
+                if(data) {
+                    products = Object.keys(data).map(id => ({id: parseInt(id), ...data[id]}));
+                    renderUI();
+                } else { initializeDB(); } // First time setup
+            });
+        }
+
+        function renderUI() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col hover:shadow-md transition">
+                    <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-32 md:h-40 object-cover rounded-xl mb-3">
+                    <h3 class="font-bold text-gray-800 text-sm md:text-base mb-1">${p.name}</h3>
+                    <p class="text-red-600 font-black text-lg mb-3">Rs. ${p.price}</p>
+                    <button onclick="addToCart(${p.id})" class="mt-auto bg-yellow-400 text-red-900 text-xs font-black py-2.5 rounded-lg uppercase tracking-wider active:bg-yellow-500">Add to Cart</button>
+                </div>
+            `).join('');
+            updateCartUI();
+        }
+
+        // --- Admin Functions ---
+        function showAdminLogin() { document.getElementById('admin-modal').classList.remove('hidden'); }
+        function closeAdmin() { document.getElementById('admin-modal').classList.add('hidden'); }
+        
+        function loginAdmin() {
+            if(document.getElementById('admin-email').value === "gayal@gmail.com" && document.getElementById('admin-pass').value === "abc@123") {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('upload-panel').classList.remove('hidden');
+            } else { alert("Login Failed!"); }
+        }
+
+        async function uploadToImgBB() {
+            const file = document.getElementById('file-input').files[0];
+            const id = document.getElementById('prod-id').value;
+            const price = document.getElementById('prod-price').value;
+            const status = document.getElementById('up-status');
+            const btn = document.getElementById('up-btn');
+
+            if(!file && !price) return alert("Please select a file or enter price!");
+
+            btn.disabled = true; status.innerText = "Syncing... ⏳";
+
+            let finalImgUrl = products.find(p => p.id == id).img;
+
+            if(file) {
+                const form = new FormData(); form.append("image", file);
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API}`, { method: "POST", body: form });
+                const data = await res.json();
+                finalImgUrl = data.data.url;
+            }
+
+            const updateData = { img: finalImgUrl };
+            if(price) updateData.price = parseInt(price);
+
+            await db.ref('products/' + id).update(updateData);
+            status.innerText = "Updated Successfully! ✅";
+            btn.disabled = false;
+        }
+
+        // --- Cart Functions ---
+        function addToCart(id) {
+            const p = products.find(x => x.id === id);
+            const exist = cart.find(x => x.id === id);
+            if(exist) exist.qty++; else cart.push({...p, qty: 1});
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items');
+            const count = document.getElementById('cart-count');
+            const totalDisplay = document.getElementById('cart-total');
+            let total = 0, itemsCount = 0;
+
+            list.innerHTML = cart.map((item, i) => {
+                total += (item.price * item.qty);
+                itemsCount += item.qty;
+                return `
+                    <div class="flex items-center justify-between bg-white p-3 rounded-xl border shadow-sm">
+                        <div class="flex items-center space-x-3">
+                            <img src="${item.img}" class="w-12 h-12 rounded object-cover">
+                            <div><h4 class="font-bold text-xs">${item.name}</h4><p class="text-xs text-gray-500">Rs. ${item.price}</p></div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="changeQty(${i}, -1)" class="w-7 h-7 bg-gray-100 rounded-full">-</button>
+                            <span class="font-bold text-sm w-4 text-center">${item.qty}</span>
+                            <button onclick="changeQty(${i}, 1)" class="w-7 h-7 bg-gray-100 rounded-full">+</button>
+                        </div>
+                    </div>`;
+            }).join('');
+            if(cart.length === 0) list.innerHTML = `<div class="text-center py-10 text-gray-400">Cart is empty</div>`;
+            count.innerText = itemsCount;
+            totalDisplay.innerText = total.toLocaleString();
+        }
+
+        function changeQty(idx, d) { cart[idx].qty += d; if(cart[idx].qty <= 0) cart.splice(idx, 1); updateCartUI(); }
+        function toggleCart() { document.getElementById('cart-sidebar').classList.toggle('translate-x-full'); }
+
+        function sendToWhatsApp() {
+            if(cart.length === 0) return alert("Cart is empty!");
+            let msg = "*EASY VEG - NEW ORDER*\n------------------------\n";
+            let total = 0;
+            cart.forEach(i => {
+                msg += `✅ ${i.name} (${i.qty} x ${i.price}) = Rs. ${i.qty * i.price}\n`;
+                total += (i.qty * i.price);
+            });
+            msg += `\n*TOTAL: Rs. ${total}*\n------------------------\nName:\nAddress:`;
+            window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // Initial Sync setup for your first use
+        function initializeDB() {
+            const initial = {
+                1: { name: "Konda Keum", price: 110, img: "" },
+                2: { name: "Mung Keum", price: 100, img: "" },
+                3: { name: "Kokis", price: 60, img: "" },
+                4: { name: "Aluwa", price: 90, img: "" },
+                5: { name: "Rulang", price: 90, img: "" },
+                6: { name: "Naran Keum", price: 100, img: "" },
+                7: { name: "Pani Walalu", price: 130, img: "" },
+                8: { name: "Aasmi", price: 170, img: "" },
+                9: { name: "Dodol - 250g", price: 550, img: "" }
+            };
+            db.ref('products').set(initial);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

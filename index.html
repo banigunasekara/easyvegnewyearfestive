@@ -250,20 +250,32 @@
             window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function initializeDB() {
-            const initial = {
-                1: { name: "Konda Keum", price: 110, img: "" },
-                2: { name: "Mung Keum", price: 100, img: "" },
-                3: { name: "Kokis", price: 60, img: "" },
-                4: { name: "Aluwa", price: 90, img: "" },
-                5: { name: "Rulang", price: 90, img: "" },
-                6: { name: "Naran Keum", price: 100, img: "" },
-                7: { name: "Pani Walalu", price: 130, img: "" },
-                8: { name: "Aasmi", price: 170, img: "" },
-                9: { name: "Dodol - 250g", price: 550, img: "" }
-            };
-            db.ref('products').set(initial);
-        }
+function initializeDB() {
+    const productsData = {
+        1: { name: "Konda Keum", price: 110, img: "", category: "item" },
+        2: { name: "Mung Keum", price: 100, img: "", category: "item" },
+        3: { name: "Kokis", price: 60, img: "", category: "item" },
+        4: { name: "Aluwa", price: 90, img: "", category: "item" },
+        5: { name: "Rulang", price: 90, img: "", category: "item" },
+        6: { name: "Naran Keum", price: 100, img: "", category: "item" },
+        7: { name: "Pani Walalu", price: 130, img: "", category: "item" },
+        8: { name: "Aasmi", price: 170, img: "", category: "item" },
+        9: { name: "Dodol - 250g", price: 550, img: "", category: "item" }
+    };
+
+    const packsData = {
+        101: { name: "Pack 1", price: 900, details: "Konda Keum 02, Mung Keum 02, Kokis 05, Aluwa 02", img: "", category: "pack" },
+        102: { name: "Pack 2", price: 1500, details: "Konda Keum 03, Mung Keum 03, Kokis 07, Pani Walalu 02, Aasmi 01", img: "", category: "pack" },
+        103: { name: "Pack 3", price: 2000, details: "Konda Keum 05, Mung Keum 05, Kokis 08, Aluwa 02, Pani Walalu 01, Aasmi 01", img: "", category: "pack" },
+        104: { name: "Pack 4", price: 2500, details: "Konda Keum 05, Mung Keum 05, Kokis 10, Aluwa 02, Rulang 02, Pani Walalu 02, Aasmi 01", img: "", category: "pack" },
+        105: { name: "Pack 5", price: 3500, details: "Konda Keum 05, Mung Keum 05, Kokis 10, Aluwa 03, Rulang 03, Naran Keum 02, Pani Walalu 02, Aasmi 02, Dodol 01", img: "", category: "pack" },
+        106: { name: "Pack 6", price: 5000, details: "Konda Keum 08, Mung Keum 08, Kokis 12, Aluwa 04, Rulang 05, Naran Keum 04, Pani Walalu 04, Aasmi 02, Dodol 01", img: "", category: "pack" },
+        107: { name: "Pack 7", price: 7500, details: "Konda Keum 10, Mung Keum 10, Kokis 20, Aluwa 07, Rulang 06, Naran Keum 05, Pani Walalu 06, Aasmi 04, Dodol 02", img: "", category: "pack" }
+    };
+
+    db.ref('products').set(productsData);
+    db.ref('packs').set(packsData); // Packs ටික වෙනම database එකට යනවා
+}
 
         loadData();
     </script>

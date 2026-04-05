@@ -14,8 +14,8 @@
         .festive-gradient { background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); }
         .cart-badge { position: absolute; top: -5px; right: -5px; background: #fbbf24; color: #b91c1c; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; border: 1px solid white; }
         .active-tab { background-color: #b91c1c !important; color: white !important; border-color: #b91c1c !important; }
-        .product-card { transition: all 0.2s ease; }
-        .product-card:active { transform: scale(0.96); }
+        /* AUDIT FIX: Prevent image stretching */
+        .img-contain { object-fit: contain !important; background-color: #f3f4f6; }
     </style>
 </head>
 <body class="pb-20">
@@ -23,15 +23,15 @@
     <header class="bg-white shadow-sm p-3 md:p-4 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2 md:space-x-3">
-                <img src="https://i.ibb.co/Lhyg68F/logo.jpg" alt="EasyVeg Logo" class="h-10 w-10 md:h-12 md:w-12 rounded-full border-2 border-green-600">
+                <img id="main-logo" src="https://i.ibb.co/Lhyg68F/logo.jpg" alt="Logo" class="h-10 w-10 md:h-12 md:w-12 rounded-full border-2 border-green-600 object-cover">
                 <div>
                     <h1 class="text-lg md:text-2xl font-black text-green-700 leading-none">EasyVeg</h1>
-                    <p class="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest">Digital Sweets Shop</p>
+                    <p class="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest">Awurudu Treats</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="showAdminLogin()" class="text-gray-300 hover:text-gray-500 transition"><i class="fas fa-lock text-lg"></i></button>
-                <button onclick="toggleCart()" class="relative p-2.5 text-red-700 bg-red-50 rounded-full active:bg-red-100 transition shadow-sm">
+                <button onclick="showAdminLogin()" class="text-gray-300 hover:text-gray-500"><i class="fas fa-lock"></i></button>
+                <button onclick="toggleCart()" class="relative p-2.5 text-red-700 bg-red-50 rounded-full shadow-sm active:scale-95 transition">
                     <i class="fas fa-shopping-basket text-xl md:text-2xl"></i>
                     <span id="cart-count" class="cart-badge">0</span>
                 </button>
@@ -40,18 +40,25 @@
     </header>
 
     <div id="admin-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[2rem] p-6 w-full max-w-md shadow-2xl">
+        <div class="bg-white rounded-[2rem] p-6 w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
             <div id="login-form">
-                <h2 class="text-2xl font-bold mb-6 text-center">Admin Login</h2>
-                <input type="email" id="admin-email" placeholder="Email" class="w-full p-4 bg-gray-50 border rounded-2xl mb-3 outline-none focus:ring-2 focus:ring-green-500">
-                <input type="password" id="admin-pass" placeholder="Password" class="w-full p-4 bg-gray-50 border rounded-2xl mb-6 outline-none focus:ring-2 focus:ring-green-500">
-                <button onclick="loginAdmin()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">Enter Portal</button>
-                <button onclick="closeAdmin()" class="w-full mt-4 text-gray-400 text-sm">Cancel</button>
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Admin Portal</h2>
+                <input type="email" id="admin-email" placeholder="Email" class="w-full p-4 bg-gray-50 border rounded-xl mb-3 outline-none">
+                <input type="password" id="admin-pass" placeholder="Password" class="w-full p-4 bg-gray-50 border rounded-xl mb-6 outline-none">
+                <button onclick="loginAdmin()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition">Login</button>
+                <button onclick="closeAdmin()" class="w-full mt-3 text-gray-400 italic text-sm">Close</button>
             </div>
             <div id="upload-panel" class="hidden">
-                <h2 class="text-xl font-bold mb-4 text-green-700">Update Products</h2>
+                <h2 class="text-xl font-bold mb-4 text-green-700">Control Panel</h2>
+                
+                <div class="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-2xl">
+                    <p class="text-[10px] font-bold text-yellow-700 uppercase mb-2">Update Store Logo</p>
+                    <input type="file" id="logo-input" class="text-xs mb-2 w-full">
+                    <button onclick="uploadLogo()" class="w-full bg-yellow-500 text-white py-2 rounded-lg text-xs font-bold shadow-sm">Save Logo</button>
+                </div>
+
                 <div class="space-y-4">
-                    <select id="prod-id" class="w-full p-4 bg-gray-50 border rounded-2xl font-semibold">
+                    <select id="prod-id" class="w-full p-4 bg-gray-50 border rounded-xl font-semibold outline-none">
                         <optgroup label="Individual Items">
                             <option value="1">Konda Keum</option><option value="2">Mung Keum</option>
                             <option value="3">Kokis</option><option value="4">Aluwa</option>
@@ -59,21 +66,21 @@
                             <option value="7">Pani Walalu</option><option value="8">Aasmi</option>
                             <option value="9">Dodol - 250g</option>
                         </optgroup>
-                        <optgroup label="Special Packs">
+                        <optgroup label="Festive Packs">
                             <option value="101">Pack 1</option><option value="102">Pack 2</option>
                             <option value="103">Pack 3</option><option value="104">Pack 4</option>
                             <option value="105">Pack 5</option><option value="106">Pack 6</option>
                             <option value="107">Pack 7</option>
                         </optgroup>
                     </select>
-                    <input type="number" id="prod-price" placeholder="Enter New Price" class="w-full p-4 bg-gray-50 border rounded-2xl">
-                    <div class="p-4 border-2 border-dashed rounded-2xl text-center bg-blue-50">
-                        <input type="file" id="file-input" class="w-full text-xs">
-                    </div>
-                    <button id="up-btn" onclick="uploadToImgBB()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-md">Sync Data</button>
-                    <button onclick="initializeDB()" class="w-full bg-orange-100 text-orange-700 py-2 rounded-xl text-[10px] font-bold uppercase mt-4">Manual Data Repair</button>
+                    <input type="number" id="prod-price" placeholder="Set Price" class="w-full p-4 bg-gray-50 border rounded-xl outline-none">
+                    <input type="file" id="file-input" class="w-full text-xs mb-2">
+                    <button id="up-btn" onclick="uploadToImgBB()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-md">Upload Image & Price</button>
+                    
+                    <hr class="my-4">
+                    <button onclick="initializeDB()" class="w-full bg-orange-100 text-orange-700 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm">Repair Database (Run if Blank)</button>
                     <p id="up-status" class="mt-2 text-xs text-center font-bold"></p>
-                    <button onclick="closeAdmin()" class="w-full mt-4 text-red-500 font-bold">Logout</button>
+                    <button onclick="closeAdmin()" class="w-full mt-4 text-red-500 font-bold text-sm">Logout</button>
                 </div>
             </div>
         </div>
@@ -81,37 +88,34 @@
 
     <section class="festive-gradient text-white p-8 md:p-14 text-center">
         <h2 class="text-4xl md:text-6xl font-black mb-2 tracking-tight">අවුරුදු රසකැවිලි</h2>
-        <p class="text-yellow-200 text-sm md:text-xl italic font-light">Authentic & Fresh Sri Lankan Treats</p>
+        <p class="text-yellow-200 text-sm md:text-xl italic font-light">Fresh & Authentic Treats for the Season</p>
     </section>
 
     <div class="flex justify-center space-x-2 mt-8 px-4">
-        <button onclick="filterItems('all')" id="btn-all" class="filter-btn active-tab px-6 py-2.5 rounded-full border border-gray-200 text-xs font-black uppercase transition shadow-sm">All</button>
-        <button onclick="filterItems('item')" id="btn-item" class="filter-btn bg-white px-6 py-2.5 rounded-full border border-gray-200 text-gray-500 text-xs font-black uppercase transition shadow-sm">Individual</button>
-        <button onclick="filterItems('pack')" id="btn-pack" class="filter-btn bg-white px-6 py-2.5 rounded-full border border-gray-200 text-gray-500 text-xs font-black uppercase transition shadow-sm">Packs</button>
+        <button onclick="filterItems('all')" id="btn-all" class="filter-btn active-tab px-6 py-2.5 rounded-full border border-gray-200 text-xs font-black transition shadow-sm uppercase">All</button>
+        <button onclick="filterItems('item')" id="btn-item" class="filter-btn bg-white px-6 py-2.5 rounded-full border border-gray-200 text-gray-500 text-xs font-black transition shadow-sm uppercase">Items</button>
+        <button onclick="filterItems('pack')" id="btn-pack" class="filter-btn bg-white px-6 py-2.5 rounded-full border border-gray-200 text-gray-500 text-xs font-black transition shadow-sm uppercase">Packs</button>
     </div>
 
     <main class="container mx-auto px-4 mt-8">
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            <div class="col-span-full text-center py-20 text-gray-400 animate-pulse">
-                <i class="fas fa-cookie-bite text-4xl mb-4"></i>
-                <p>Connecting to EasyVeg Database...</p>
-            </div>
+            <div class="col-span-full text-center py-20 text-gray-400 italic animate-pulse">Syncing Festive Treats...</div>
         </div>
     </main>
 
-    <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300 ease-in-out">
+    <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300">
         <div class="flex flex-col h-full">
             <div class="p-6 border-b flex justify-between items-center bg-red-700 text-white shadow-md">
-                <h3 class="text-xl font-bold uppercase tracking-widest">ඔබේ ඇණවුම</h3>
+                <h3 class="text-xl font-bold uppercase tracking-tight">ඔබේ ඇණවුම</h3>
                 <button onclick="toggleCart()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/20"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div id="cart-items" class="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50"></div>
-            <div class="p-6 border-t bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+            <div id="cart-items" class="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50/50"></div>
+            <div class="p-6 border-t bg-white">
                 <div class="flex justify-between text-2xl font-black mb-6 text-gray-800">
                     <span>එකතුව (Total):</span>
                     <span class="text-red-700">Rs. <span id="cart-total">0</span></span>
                 </div>
-                <button onclick="sendToWhatsApp()" class="w-full bg-green-600 text-white py-5 rounded-2xl font-bold text-lg flex items-center justify-center space-x-3 shadow-xl active:scale-95 transition-all">
+                <button onclick="sendToWhatsApp()" class="w-full bg-green-600 text-white py-5 rounded-2xl font-bold text-lg flex items-center justify-center space-x-3 shadow-xl active:scale-95 transition">
                     <i class="fab fa-whatsapp text-3xl"></i>
                     <span>Order via WhatsApp</span>
                 </button>
@@ -120,7 +124,6 @@
     </div>
 
     <script>
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCeo_DytuLnAin7WnzcKcOQQO9DgGcR7pA",
             authDomain: "my-web-site-5cbf9.firebaseapp.com",
@@ -141,54 +144,58 @@
         let products = [];
         let cart = [];
 
-        // AUDIT FIX: Independent Listeners for robust loading
+        // LOAD DATA AUDIT: Robust loading
         function loadData() {
-            // Listener 1: Items
+            db.ref('settings/logo').on('value', (snap) => {
+                if(snap.val()) document.getElementById('main-logo').src = snap.val();
+            });
             db.ref('products').on('value', (snap) => {
                 db_items = snap.val() || {};
-                mergeAndRender();
+                mergeData();
             });
-            // Listener 2: Packs
             db.ref('packs').on('value', (snap) => {
                 db_packs = snap.val() || {};
-                mergeAndRender();
+                mergeData();
             });
         }
 
-        function mergeAndRender() {
+        function mergeData() {
             const combined = [
                 ...Object.keys(db_items).map(id => ({id, ...db_items[id], category: 'item'})),
                 ...Object.keys(db_packs).map(id => ({id, ...db_packs[id], category: 'pack'}))
             ];
             products = combined;
-            renderUI(currentTab);
+            renderUI(currentFilter);
         }
 
-        let currentTab = 'all';
+        let currentFilter = 'all';
         function renderUI(filter = 'all') {
-            currentTab = filter;
+            currentFilter = filter;
             const grid = document.getElementById('product-grid');
-            
-            // AUDIT FIX: Self-healing category logic
             let filtered = products;
+
+            // AUDIT FIX: Filter logic correction
             if(filter === 'item') filtered = products.filter(p => p.category === 'item' || parseInt(p.id) < 100);
-            if(filter === 'pack') filtered = products.filter(p => p.category === 'pack' || parseInt(p.id) >= 100);
+            else if(filter === 'pack') filtered = products.filter(p => p.category === 'pack' || parseInt(p.id) >= 100);
 
             if(products.length === 0) return;
 
-            grid.innerHTML = filtered.map(p => `
-                <div class="product-card bg-white rounded-[2rem] shadow-sm border border-gray-100 p-2.5 flex flex-col hover:shadow-xl transition-all">
+            grid.innerHTML = filtered.map(p => {
+                // AUDIT FIX: Use 'img-contain' for Packs to prevent stretching
+                const imgClass = p.category === 'pack' ? 'img-contain' : 'object-cover';
+                return `
+                <div class="bg-white rounded-[2rem] shadow-sm border p-3 flex flex-col hover:shadow-lg transition active:scale-95">
                     <div class="w-full h-32 md:h-48 bg-gray-100 rounded-[1.5rem] mb-3 overflow-hidden">
-                        <img src="${p.img || 'https://via.placeholder.com/400x400?text=EasyVeg'}" class="w-full h-full object-cover">
+                        <img src="${p.img || 'https://via.placeholder.com/400x400?text=EasyVeg'}" class="w-full h-full ${imgClass}">
                     </div>
                     <div class="px-1 flex-grow">
                         <h3 class="font-bold text-gray-800 text-[11px] md:text-sm mb-1 uppercase tracking-tight line-clamp-1">${p.name}</h3>
-                        ${p.details ? `<p class="text-[9px] text-gray-400 italic mb-2 line-clamp-2 leading-none">${p.details}</p>` : ''}
+                        ${p.details ? `<p class="text-[9px] text-gray-400 italic mb-2 line-clamp-2 leading-tight">${p.details}</p>` : ''}
                         <p class="text-red-700 font-black text-sm md:text-xl mb-3">Rs. ${p.price}</p>
                     </div>
-                    <button onclick="addToCart('${p.id}')" class="mt-auto bg-yellow-400 text-red-900 text-[10px] font-black py-3 rounded-2xl uppercase tracking-widest active:bg-yellow-500 shadow-sm">Add to Basket</button>
-                </div>
-            `).join('');
+                    <button onclick="addToCart('${p.id}')" class="mt-auto bg-yellow-400 text-red-900 text-[10px] font-black py-3 rounded-2xl uppercase tracking-widest active:bg-yellow-500 shadow-sm">Add</button>
+                </div>`;
+            }).join('');
         }
 
         function filterItems(type) {
@@ -197,12 +204,11 @@
             renderUI(type);
         }
 
-        // CART LOGIC
+        // CART AUDIT: Quantity multiplication
         function addToCart(id) {
             const p = products.find(x => x.id == id);
             const exist = cart.find(x => x.id == id);
-            if(exist) exist.qty++; 
-            else cart.push({...p, qty: 1});
+            if(exist) exist.qty++; else cart.push({...p, qty: 1});
             updateCartUI();
         }
 
@@ -215,9 +221,9 @@
                 const sub = item.price * item.qty;
                 total += sub;
                 return `
-                    <div class="flex items-center justify-between bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between bg-white p-4 rounded-3xl border shadow-sm">
                         <div class="flex items-center space-x-3">
-                            <img src="${item.img}" class="w-14 h-14 rounded-2xl object-cover bg-gray-50">
+                            <img src="${item.img}" class="w-14 h-14 rounded-2xl object-cover bg-gray-100">
                             <div>
                                 <h4 class="font-bold text-[10px] uppercase text-gray-800 leading-none mb-1">${item.name}</h4>
                                 <p class="text-red-700 font-bold text-sm">Rs. ${item.price}</p>
@@ -231,8 +237,6 @@
                     </div>`;
             }).join('');
             
-            if(cart.length === 0) list.innerHTML = `<div class="text-center py-20 text-gray-300 uppercase text-[10px] font-bold tracking-widest">Basket is Empty</div>`;
-
             document.getElementById('cart-count').innerText = cart.reduce((a, b) => a + b.qty, 0);
             totalDisplay.innerText = total.toLocaleString();
         }
@@ -240,15 +244,14 @@
         function changeQty(idx, d) { cart[idx].qty += d; if(cart[idx].qty <= 0) cart.splice(idx, 1); updateCartUI(); }
         function toggleCart() { document.getElementById('cart-sidebar').classList.toggle('translate-x-full'); }
 
-        // ADMIN
-        function showAdminLogin() { document.getElementById('admin-modal').classList.remove('hidden'); }
-        function closeAdmin() { document.getElementById('admin-modal').classList.add('hidden'); }
-        
-        function loginAdmin() {
-            if(document.getElementById('admin-email').value === "gayal@gmail.com" && document.getElementById('admin-pass').value === "abc@123") {
-                document.getElementById('login-form').classList.add('hidden');
-                document.getElementById('upload-panel').classList.remove('hidden');
-            } else { alert("Access Denied!"); }
+        // ADMIN AUDIT
+        async function uploadLogo() {
+            const file = document.getElementById('logo-input').files[0];
+            if(!file) return alert("Select logo file!");
+            const form = new FormData(); form.append("image", file);
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API}`, { method: "POST", body: form });
+            const data = await res.json();
+            if(data.success) { await db.ref('settings/logo').set(data.data.url); alert("Logo Saved!"); }
         }
 
         async function uploadToImgBB() {
@@ -259,11 +262,10 @@
             const btn = document.getElementById('up-btn');
 
             if(!file && !price) return alert("Photo or Price required!");
-            btn.disabled = true; status.innerText = "Syncing... ⚡";
+            btn.disabled = true; status.innerText = "Processing... ⚡";
 
             try {
                 let finalImgUrl = products.find(p => p.id == id)?.img || "";
-
                 if(file) {
                     const form = new FormData(); form.append("image", file);
                     const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API}`, { method: "POST", body: form });
@@ -274,20 +276,23 @@
                 const path = parseInt(id) > 100 ? 'packs/' : 'products/';
                 const updateData = { img: finalImgUrl };
                 if(price) updateData.price = parseInt(price);
-
                 await db.ref(path + id).update(updateData);
-                status.innerText = "Database Updated! ✅";
-                status.style.color = "green";
-            } catch (e) {
-                status.innerText = "Error: " + e.message;
-                status.style.color = "red";
-            } finally { btn.disabled = false; }
+                status.innerText = "Sync Success! ✅"; status.style.color = "green";
+            } catch (e) { status.innerText = "Error!"; status.style.color = "red"; } finally { btn.disabled = false; }
+        }
+
+        function showAdminLogin() { document.getElementById('admin-modal').classList.remove('hidden'); }
+        function closeAdmin() { document.getElementById('admin-modal').classList.add('hidden'); }
+        function loginAdmin() {
+            if(document.getElementById('admin-email').value === "gayal@gmail.com" && document.getElementById('admin-pass').value === "abc@123") {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('upload-panel').classList.remove('hidden');
+            } else { alert("Login Error!"); }
         }
 
         function sendToWhatsApp() {
-            if(cart.length === 0) return alert("Basket is empty!");
-            let msg = "*EASY VEG - NEW ORDER*\n";
-            msg += "------------------------------\n";
+            if(cart.length === 0) return alert("Basket empty!");
+            let msg = "*EASY VEG - NEW ORDER*\n------------------------------\n";
             let total = 0;
             cart.forEach(i => {
                 msg += `✅ *${i.name}* (x${i.qty}) = Rs.${i.qty * i.price}\n`;
@@ -298,7 +303,7 @@
         }
 
         function initializeDB() {
-            const pD = {
+            const items = {
                 1: { name: "Konda Keum", price: 110, img: "", category: "item" },
                 2: { name: "Mung Keum", price: 100, img: "", category: "item" },
                 3: { name: "Kokis", price: 60, img: "", category: "item" },
@@ -309,17 +314,17 @@
                 8: { name: "Aasmi", price: 170, img: "", category: "item" },
                 9: { name: "Dodol - 250g", price: 550, img: "", category: "item" }
             };
-            const pkD = {
-                101: { name: "Pack 1", price: 900, details: "Konda Keum 2, Mung Keum 2, Kokis 5, Aluwa 2", img: "", category: "pack" },
-                102: { name: "Pack 2", price: 1500, details: "Konda Keum 3, Mung Keum 3, Kokis 7, Pani Walalu 2, Aasmi 1", img: "", category: "pack" },
-                103: { name: "Pack 3", price: 2000, details: "Konda Keum 5, Mung Keum 5, Kokis 8, Aluwa 2, Pani Walalu 1, Aasmi 1", img: "", category: "pack" },
-                104: { name: "Pack 4", price: 2500, details: "Konda Keum 5, Mung Keum 5, Kokis 10, Aluwa 2, Rulang 2, Pani Walalu 2, Aasmi 1", img: "", category: "pack" },
-                105: { name: "Pack 5", price: 3500, details: "Konda Keum 5, Mung Keum 5, Kokis 10, Aluwa 3, Rulang 3, Naran Keum 2, Pani Walalu 2, Aasmi 2, Dodol 1", img: "", category: "pack" },
-                106: { name: "Pack 6", price: 5000, details: "Konda Keum 8, Mung Keum 8, Kokis 12, Aluwa 4, Rulang 5, Naran Keum 4, Pani Walalu 4, Aasmi 2, Dodol 1", img: "", category: "pack" },
-                107: { name: "Pack 7", price: 7500, details: "Konda Keum 10, Mung Keum 10, Kokis 20, Aluwa 7, Rulang 6, Naran Keum 5, Pani Walalu 6, Aasmi 4, Dodol 2", img: "", category: "pack" }
+            const packs = {
+                101: { name: "Pack 1", price: 900, details: "Konda Keum 02, Mung Keum 02, Kokis 05, Aluwa 02", img: "", category: "pack" },
+                102: { name: "Pack 2", price: 1500, details: "Konda Keum 03, Mung Keum 03, Kokis 07, Pani Walalu 02, Aasmi 01", img: "", category: "pack" },
+                103: { name: "Pack 3", price: 2000, details: "Konda Keum 05, Mung Keum 05, Kokis 08, Aluwa 02, Pani Walalu 01, Aasmi 01", img: "", category: "pack" },
+                104: { name: "Pack 4", price: 2500, details: "Konda Keum 05, Mung Keum 05, Kokis 10, Aluwa 02, Rulang 02, Pani Walalu 02, Aasmi 01", img: "", category: "pack" },
+                105: { name: "Pack 5", price: 3500, details: "Konda Keum 05, Mung Keum 05, Kokis 10, Aluwa 03, Rulang 03, Naran Keum 02, Pani Walalu 02, Aasmi 02, Dodol 01", img: "", category: "pack" },
+                106: { name: "Pack 6", price: 5000, details: "Konda Keum 08, Mung Keum 08, Kokis 12, Aluwa 04, Rulang 05, Naran Keum 04, Pani Walalu 04, Aasmi 02, Dodol 01", img: "", category: "pack" },
+                107: { name: "Pack 7", price: 7500, details: "Konda Keum 10, Mung Keum 10, Kokis 20, Aluwa 07, Rulang 06, Naran Keum 05, Pani Walalu 06, Aasmi 04, Dodol 02", img: "https://i.ibb.co/3WqPstC/image-e7b8c3.jpg", category: "pack" }
             };
-            db.ref('products').set(pD);
-            db.ref('packs').set(pkD);
+            db.ref('products').set(items);
+            db.ref('packs').set(packs);
             alert("Database Corrected!");
         }
 

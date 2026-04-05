@@ -54,7 +54,7 @@
                 <input type="number" id="prod-price" placeholder="Update Price" class="w-full p-3 border rounded mb-3">
                 <input type="file" id="file-input" class="w-full mb-4 text-sm text-gray-500">
                 <button id="up-btn" onclick="uploadToImgBB()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Upload & Sync</button>
-                <p id="up-status" class="mt-2 text-xs text-center"></p>
+                <p id="up-status" class="mt-2 text-xs text-center font-bold"></p>
                 <button onclick="closeAdmin()" class="w-full mt-4 text-red-500 font-bold">Logout / Exit</button>
             </div>
         </div>
@@ -62,19 +62,19 @@
 
     <div class="festive-gradient text-white p-8 text-center">
         <h2 class="text-3xl font-bold mb-1">අවුරුදු රසකැවිලි</h2>
-        <p class="text-yellow-200">EasyVeg - Freshly made for you</p>
+        <p class="text-yellow-200 italic">EasyVeg - Authentic Festive Treats</p>
     </div>
 
     <main class="container mx-auto px-4 mt-6">
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div class="col-span-full text-center py-10 text-gray-400">Loading festive treats...</div>
+            <div class="col-span-full text-center py-10 text-gray-400 italic">Loading treats from Firebase...</div>
         </div>
     </main>
 
     <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-[60] transform translate-x-full transition-transform duration-300">
         <div class="flex flex-col h-full">
             <div class="p-6 border-b flex justify-between items-center bg-red-700 text-white">
-                <h3 class="text-xl font-bold">ඔබේ ඇණවුම (Cart)</h3>
+                <h3 class="text-xl font-bold">ඔබේ ඇණවුම</h3>
                 <button onclick="toggleCart()" class="text-2xl">&times;</button>
             </div>
             <div id="cart-items" class="flex-grow overflow-y-auto p-4 space-y-3"></div>
@@ -92,16 +92,17 @@
     </div>
 
     <script>
-        // Configuration
+        // UPDATED FIREBASE CONFIG WITH CORRECT REGION URL
         const firebaseConfig = {
             apiKey: "AIzaSyCeo_DytuLnAin7WnzcKcOQQO9DgGcR7pA",
             authDomain: "my-web-site-5cbf9.firebaseapp.com",
             projectId: "my-web-site-5cbf9",
-            databaseURL: "https://my-web-site-5cbf9-default-rtdb.firebaseio.com/",
+            databaseURL: "https://my-web-site-5cbf9-default-rtdb.asia-southeast1.firebasedatabase.app", // FIXED REGION
             storageBucket: "my-web-site-5cbf9.firebasestorage.app",
             messagingSenderId: "713144193429",
             appId: "1:713144193429:web:33cbdc57268184af79a69c"
         };
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const IMGBB_API = "0d3d35934a71f8813b2b79e4b464eea5";
@@ -110,22 +111,31 @@
         let products = [];
         let cart = [];
 
-        // Load Data from Firebase
         function loadData() {
             db.ref('products').on('value', (snap) => {
                 const data = snap.val();
                 if(data) {
                     products = Object.keys(data).map(id => ({id: parseInt(id), ...data[id]}));
                     renderUI();
-                } else { initializeDB(); } // First time setup
+                } else { 
+                    console.log("No data found, initializing...");
+                    initializeDB(); 
+                }
+            }, (error) => {
+                console.error("Firebase Read Error:", error);
+                alert("Database Error: Make sure Rules are set to true!");
             });
         }
 
         function renderUI() {
             const grid = document.getElementById('product-grid');
+            if(!products.length) return;
+            
             grid.innerHTML = products.map(p => `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col hover:shadow-md transition">
-                    <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-32 md:h-40 object-cover rounded-xl mb-3">
+                    <div class="w-full h-32 md:h-40 bg-gray-100 rounded-xl mb-3 overflow-hidden flex items-center justify-center">
+                        <img src="${p.img || 'https://via.placeholder.com/200?text=No+Image'}" class="w-full h-full object-cover">
+                    </div>
                     <h3 class="font-bold text-gray-800 text-sm md:text-base mb-1">${p.name}</h3>
                     <p class="text-red-600 font-black text-lg mb-3">Rs. ${p.price}</p>
                     <button onclick="addToCart(${p.id})" class="mt-auto bg-yellow-400 text-red-900 text-xs font-black py-2.5 rounded-lg uppercase tracking-wider active:bg-yellow-500">Add to Cart</button>
@@ -134,7 +144,6 @@
             updateCartUI();
         }
 
-        // --- Admin Functions ---
         function showAdminLogin() { document.getElementById('admin-modal').classList.remove('hidden'); }
         function closeAdmin() { document.getElementById('admin-modal').classList.add('hidden'); }
         
@@ -153,27 +162,45 @@
             const btn = document.getElementById('up-btn');
 
             if(!file && !price) return alert("Please select a file or enter price!");
+            
+            // Check if products are loaded
+            if(products.length === 0) return alert("Database is still loading. Please wait 2 seconds.");
 
-            btn.disabled = true; status.innerText = "Syncing... ⏳";
+            btn.disabled = true; 
+            status.innerText = "Syncing with ImgBB... ⏳";
+            status.style.color = "blue";
 
-            let finalImgUrl = products.find(p => p.id == id).img;
+            try {
+                let finalImgUrl = "";
+                const existingProduct = products.find(p => p.id == id);
+                if(existingProduct) finalImgUrl = existingProduct.img;
 
-            if(file) {
-                const form = new FormData(); form.append("image", file);
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API}`, { method: "POST", body: form });
-                const data = await res.json();
-                finalImgUrl = data.data.url;
+                if(file) {
+                    const form = new FormData(); form.append("image", file);
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API}`, { method: "POST", body: form });
+                    const data = await res.json();
+                    if(data.success) {
+                        finalImgUrl = data.data.url;
+                    } else {
+                        throw new Error("ImgBB Upload Failed");
+                    }
+                }
+
+                const updateData = { img: finalImgUrl };
+                if(price) updateData.price = parseInt(price);
+
+                await db.ref('products/' + id).update(updateData);
+                status.innerText = "Updated Successfully! ✅";
+                status.style.color = "green";
+            } catch (e) {
+                console.error(e);
+                status.innerText = "Error: " + e.message;
+                status.style.color = "red";
+            } finally {
+                btn.disabled = false;
             }
-
-            const updateData = { img: finalImgUrl };
-            if(price) updateData.price = parseInt(price);
-
-            await db.ref('products/' + id).update(updateData);
-            status.innerText = "Updated Successfully! ✅";
-            btn.disabled = false;
         }
 
-        // --- Cart Functions ---
         function addToCart(id) {
             const p = products.find(x => x.id === id);
             const exist = cart.find(x => x.id === id);
@@ -193,13 +220,13 @@
                 return `
                     <div class="flex items-center justify-between bg-white p-3 rounded-xl border shadow-sm">
                         <div class="flex items-center space-x-3">
-                            <img src="${item.img}" class="w-12 h-12 rounded object-cover">
-                            <div><h4 class="font-bold text-xs">${item.name}</h4><p class="text-xs text-gray-500">Rs. ${item.price}</p></div>
+                            <img src="${item.img}" class="w-12 h-12 rounded object-cover bg-gray-100">
+                            <div><h4 class="font-bold text-[10px] uppercase">${item.name}</h4><p class="text-xs text-gray-500 font-bold">Rs. ${item.price}</p></div>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button onclick="changeQty(${i}, -1)" class="w-7 h-7 bg-gray-100 rounded-full">-</button>
+                            <button onclick="changeQty(${i}, -1)" class="w-7 h-7 bg-gray-100 rounded-full font-bold">-</button>
                             <span class="font-bold text-sm w-4 text-center">${item.qty}</span>
-                            <button onclick="changeQty(${i}, 1)" class="w-7 h-7 bg-gray-100 rounded-full">+</button>
+                            <button onclick="changeQty(${i}, 1)" class="w-7 h-7 bg-gray-100 rounded-full font-bold">+</button>
                         </div>
                     </div>`;
             }).join('');
@@ -223,7 +250,6 @@
             window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // Initial Sync setup for your first use
         function initializeDB() {
             const initial = {
                 1: { name: "Konda Keum", price: 110, img: "" },
